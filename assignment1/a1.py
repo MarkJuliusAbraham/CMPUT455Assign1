@@ -214,15 +214,21 @@ class CommandInterface:
 
 
         #y_offset_var traverses the column per y increase
-        y_offset_var = self.y_offset_var(y,0)
+        
         #x_offset_var traverses the row per given x
         x_offset_var = (x+1)
 
-        pos_in_1d_array = y_offset_var+x_offset_var
+        pos_in_1d_array = (self.max_x+1)*(y+1)+x_offset_var
         
         #do row check
 
         #check if left is the same as digit
+
+        print(self.board[pos_in_1d_array+1])
+        print(self.board[pos_in_1d_array+2])
+
+
+
         if(self.board[pos_in_1d_array-1] == digit):
             #check if right is also the same OR the twice-left is the same
             if(self.board[pos_in_1d_array+1]==digit or self.board[pos_in_1d_array-2]==digit):
@@ -233,32 +239,22 @@ class CommandInterface:
     
         #do column check
 
-
-        # self.board[max(0, min(pos_in_1d_array - 2 * y_offset_var, len(self.board) - 1))]
-
-
-        print(pos_in_1d_array)
-        print(pos_in_1d_array + 1 * y_offset_var)
-        print(pos_in_1d_array + self.y_offset_var(y,1))
-        print(len(self.board))
-        
-
         clamped_value = None
-        if(self.board[pos_in_1d_array+self.y_offset_var(y,-1)] == digit):
+        if(self.board[pos_in_1d_array+self.y_offset_var(-1)] == digit):
             #check if right is also the same OR the twice-left is the same
-            if(self.board[pos_in_1d_array+self.y_offset_var(y,1)] == digit):
+            if(self.board[pos_in_1d_array+self.y_offset_var(1)] == digit):
                 print("case 1")
                 return False
 
-            clamped_value = pos_in_1d_array+self.y_offset_var(y,-2)
+            clamped_value = pos_in_1d_array+self.y_offset_var(-2)
             if(clamped_value < 0):
                 clamped_value = 0
             
             if(self.board[clamped_value]==digit):
                 print("case 2")
                 return False
-        elif(self.board[pos_in_1d_array + self.y_offset_var(y,1)] == digit):
-            clamped_value = pos_in_1d_array + self.y_offset_var(y,2)
+        elif(self.board[pos_in_1d_array + self.y_offset_var(1)] == digit):
+            clamped_value = pos_in_1d_array + self.y_offset_var(2)
             if(clamped_value > len(self.board)-1):
                 clamped_value = len(self.board)-1
 
@@ -268,7 +264,7 @@ class CommandInterface:
         
         return True
     
-    def y_offset_var(self, y, shift):
+    def y_offset_var(self, shift):
         """
             Returns:
                 The Y offset increase in the 1d array per increment or decrement of the y-positional value
