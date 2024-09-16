@@ -24,8 +24,10 @@ class CommandInterface:
         self.board = None
         self.max_x = None
         self.max_y = None
-        self.current_player = None
+        self.current_player = 0
         self.status = None
+
+    
 
     # Convert a raw string to a command and a list of arguments
     def process_command(self, str):
@@ -97,8 +99,7 @@ class CommandInterface:
         for _ in range(self.max_x+1):
             self.board.append("#")
 
-        self.current_player = 1  # Start with player 1
-        self.status = 1
+        self.current_player = 0
         return True
                 
     def show(self, args):
@@ -126,12 +127,10 @@ class CommandInterface:
 
         if len(args) != 3:
             print("Illegal move: " + " ".join(args) + " wrong number of arguments")
-            self.status = 2
             return False
         
         if ( not args[0].isdigit() or not args[1].isdigit() or not args[2].isdigit()):
             print("Illegal move: " + " ".join(args) + " wrong coordinate")
-            self.status = 2
             return False
 
         x = int(args[0])
@@ -140,25 +139,21 @@ class CommandInterface:
 
         if(digit != '0' and digit != '1'):
             print("Illegal move: " + " ".join(args) + " wrong number")
-            self.status = 2
             return False
         
         if( not(0 <= x <= self.max_x-1) or not(0 <= y <= self.max_y-1)):
             print("Illegal move: " + " ".join(args) + " wrong coordinate")
-            self.status = 2
             return False
 
         pos_in_1d_array = (self.max_x+1)*(y+1)+(x+1)
 
         if(self.board[pos_in_1d_array] != '.'):
             print("illegal move: " + " ".join(args) + " occupied")
-            self.status = 2
             return False
         
         #neighbour testing
         if not (self.neighbour_test(x,y,digit)):
             print("Illegal move: " + " ".join(args) + " three in a row")
-            self.status = 2
             return False
 
         #missing balancing case
@@ -171,37 +166,62 @@ class CommandInterface:
 
         #math to place in a 1d array with borders
         self.board[pos_in_1d_array] = digit
+        self.current_player += 1
         return True
     
     def legal(self, args):
-        if self.play(args) == False:
-            print("No")
-        else:
+        if self.Boolean_var(args)== True:
             print("Yes")
-        return True
-    
+            return True
+        else:
+            print("No")
+            return False
+        
     def genmove(self, args):
-        self.move = []
-        for items in self.board:
-            if self.play(items) != False:
-                self.move.append(items)
-        if len(self.move) == 0:
+        moves = self.collectLegalMoves()
+        if len(moves) == 0:
             print("resign")
-        self.random = random.choice(self.move)
-        self.play(self.random)
-        return True
-    
+            return False
+        else:
+            random_play = random.choice(moves)
+            print("@", *random_play,sep =' ')
+            self.play(random_play)
+            return True 
+
     def winner(self, args):
-        if len(self.move) != 0:
-            print("1\n2\nUnfinished")
-        else: print("self.current_player")
+        moves = self.collectLegalMoves()
+        if len(moves) == 0:
+            print(1+((self.current_player % 2)==0))
+        else:
+            print("unfinished")
         return True
     
     #======================================================================================
     # End of functions requiring implementation
     #======================================================================================
 
-    
+    def Boolean_var(self,args):
+        if len(args) != 3: 
+            return False
+        if ( not args[0].isdigit() or not args[1].isdigit() or not args[2].isdigit()):
+            return False
+        x = int(args[0])
+        y = int(args[1])
+        digit = args[2]
+        if(digit != '0' and digit != '1'):
+            return False
+        if( not(0 <= x <= self.max_x-1) or not(0 <= y <= self.max_y-1)):
+            return False
+        pos_in_1d_array = (self.max_x+1)*(y+1)+(x+1)
+        if(self.board[pos_in_1d_array] != '.'):
+            return False
+        if not (self.neighbour_test(x,y,digit)):
+            return False
+        if not (self.isBalanced(x,y,digit)):
+            return False
+        else:
+            return True
+        
     def neighbour_test(self, x, y, digit):
         """
             Args: 
@@ -301,6 +321,22 @@ class CommandInterface:
 
         return True
 
+    def collectLegalMoves(self):
+        move = []
+        xpos = 0
+        ypos = 0
+        max = self.max_x*self.max_y
+        for pos_1darray in range(max):
+            xpos = pos_1darray % self.max_x
+            ypos = pos_1darray // self.max_x
+            args = [str(xpos), str(ypos), str(0)]
+            if self.Boolean_var(args) == True:
+                move.append(args)
+            args = [str(xpos), str(ypos), str(1)]
+            if self.Boolean_var(args) == True:
+                move.append(args)
+        
+        return move
 
 
 if __name__ == "__main__":
