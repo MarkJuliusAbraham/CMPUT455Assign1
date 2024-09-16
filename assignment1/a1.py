@@ -3,7 +3,7 @@
 # Full assignment specification here: https://webdocs.cs.ualberta.ca/~mmueller/courses/cmput455/assignments/a1.html
 
 import sys
-
+import random
 class CommandInterface:
     # The following is already defined and does not need modification
     # However, you may change or add to this code as you see fit, e.g. adding class variables to init
@@ -21,11 +21,11 @@ class CommandInterface:
             "genmove" : self.genmove,
             "winner" : self.winner
         }
-
         self.board = None
         self.max_x = None
         self.max_y = None
         self.current_player = None
+        self.status = None
 
     # Convert a raw string to a command and a list of arguments
     def process_command(self, str):
@@ -98,6 +98,7 @@ class CommandInterface:
             self.board.append("#")
 
         self.current_player = 1  # Start with player 1
+        self.status = 1
         return True
                 
     def show(self, args):
@@ -125,10 +126,12 @@ class CommandInterface:
 
         if len(args) != 3:
             print("Illegal move: " + " ".join(args) + " wrong number of arguments")
+            self.status = 2
             return False
         
         if ( not args[0].isdigit() or not args[1].isdigit() or not args[2].isdigit()):
-            print("Illegal move: " + " ".join(args) + " are not digits")
+            print("Illegal move: " + " ".join(args) + " wrong coordinate")
+            self.status = 2
             return False
 
         x = int(args[0])
@@ -136,25 +139,33 @@ class CommandInterface:
         digit = args[2]
 
         if(digit != '0' and digit != '1'):
-            print("digit must be either '0' or '1'")
+            print("Illegal move: " + " ".join(args) + " wrong number")
+            self.status = 2
             return False
         
         if( not(0 <= x <= self.max_x-1) or not(0 <= y <= self.max_y-1)):
-            print("Position is out of bounds")
+            print("Illegal move: " + " ".join(args) + " wrong coordinate")
+            self.status = 2
             return False
 
         pos_in_1d_array = (self.max_x+1)*(y+1)+(x+1)
 
         if(self.board[pos_in_1d_array] != '.'):
-            print("illegal move: " + " ".join(args) + " places on a taken spot")
+            print("illegal move: " + " ".join(args) + " occupied")
+            self.status = 2
             return False
         
         #neighbour testing
         if not (self.neighbour_test(x,y,digit)):
-            print("Creates a 3-of-the-same block")
+            print("Illegal move: " + " ".join(args) + " three in a row")
+            self.status = 2
             return False
 
         #missing balancing case
+        if not (self.isBalanced(x,y,digit)):
+            print("Illegal move: " + " ".join(args) + " too many " + str(digit))
+            return False
+
 
         #reaching this part assumes the above cases causes a legal move
 
@@ -163,15 +174,27 @@ class CommandInterface:
         return True
     
     def legal(self, args):
-        raise NotImplementedError("This command is not yet implemented.")
+        if self.play(args) == False:
+            print("No")
+        else:
+            print("Yes")
         return True
     
     def genmove(self, args):
-        raise NotImplementedError("This command is not yet implemented.")
+        self.move = []
+        for items in self.board:
+            if self.play(items) != False:
+                self.move.append(items)
+        if len(self.move) == 0:
+            print("resign")
+        self.random = random.choice(self.move)
+        self.play(self.random)
         return True
     
     def winner(self, args):
-        raise NotImplementedError("This command is not yet implemented.")
+        if len(self.move) != 0:
+            print("1\n2\nUnfinished")
+        else: print("self.current_player")
         return True
     
     #======================================================================================
@@ -224,11 +247,6 @@ class CommandInterface:
 
         #check if left is the same as digit
 
-        print(self.board[pos_in_1d_array+1])
-        print(self.board[pos_in_1d_array+2])
-
-
-
         if(self.board[pos_in_1d_array-1] == digit):
             #check if right is also the same OR the twice-left is the same
             if(self.board[pos_in_1d_array+1]==digit or self.board[pos_in_1d_array-2]==digit):
@@ -240,36 +258,49 @@ class CommandInterface:
         #do column check
 
         clamped_value = None
-        if(self.board[pos_in_1d_array+self.y_offset_var(-1)] == digit):
+        if(self.board[pos_in_1d_array+(self.max_x+1)*(-1)] == digit):
             #check if right is also the same OR the twice-left is the same
-            if(self.board[pos_in_1d_array+self.y_offset_var(1)] == digit):
-                print("case 1")
+            if(self.board[pos_in_1d_array+(self.max_x+1)*(1)] == digit):
                 return False
 
-            clamped_value = pos_in_1d_array+self.y_offset_var(-2)
+            clamped_value = pos_in_1d_array+(self.max_x+1)*(-2)
             if(clamped_value < 0):
                 clamped_value = 0
             
             if(self.board[clamped_value]==digit):
-                print("case 2")
                 return False
-        elif(self.board[pos_in_1d_array + self.y_offset_var(1)] == digit):
-            clamped_value = pos_in_1d_array + self.y_offset_var(2)
+        elif(self.board[pos_in_1d_array + (self.max_x+1)*(1)] == digit):
+            clamped_value = pos_in_1d_array + (self.max_x+1)*(2)
             if(clamped_value > len(self.board)-1):
                 clamped_value = len(self.board)-1
 
             if(self.board[clamped_value] == digit):
-                print("case 3")
                 return False
         
         return True
-    
-    def y_offset_var(self, shift):
-        """
-            Returns:
-                The Y offset increase in the 1d array per increment or decrement of the y-positional value
-        """
-        return (self.max_x+1)*(shift)
+
+    def isBalanced(self, x, y, digit):
+
+        amount_to_skip = self.max_x + 1
+        
+        max_entry = int(( self.max_x + self.max_x % 2 ) / 2)
+        row_count = 1
+        column_count = 1
+
+        #increments the column count for any same digit found in the column
+        for i in range(self.max_y):
+            column_count += (digit == self.board[(amount_to_skip)*(i+1)+(x+1)])
+
+        #increments the row count for any same digit found in the row
+        for i in range(self.max_x):
+            row_count += (digit == self.board[(amount_to_skip)*(y+1)+(i+1)])
+
+        #if either row or column exceeds max entry, isBalanced returns false
+        if (column_count > max_entry) or (row_count > max_entry):
+            return False
+
+        return True
+
 
 
 if __name__ == "__main__":
