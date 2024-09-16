@@ -125,52 +125,24 @@ class CommandInterface:
     
     def play(self, args):
 
-        if len(args) != 3:
-            print("Illegal move: " + " ".join(args) + " wrong number of arguments")
-            return False
         
-        if ( not args[0].isdigit() or not args[1].isdigit() or not args[2].isdigit()):
-            print("Illegal move: " + " ".join(args) + " wrong coordinate")
+        if( self.legalChecks(args,shouldPrint=True) == False ):
             return False
+
+        #math to place in a 1d array with borders
 
         x = int(args[0])
         y = int(args[1])
         digit = args[2]
 
-        if(digit != '0' and digit != '1'):
-            print("Illegal move: " + " ".join(args) + " wrong number")
-            return False
-        
-        if( not(0 <= x <= self.max_x-1) or not(0 <= y <= self.max_y-1)):
-            print("Illegal move: " + " ".join(args) + " wrong coordinate")
-            return False
-
         pos_in_1d_array = (self.max_x+1)*(y+1)+(x+1)
 
-        if(self.board[pos_in_1d_array] != '.'):
-            print("illegal move: " + " ".join(args) + " occupied")
-            return False
-        
-        #neighbour testing
-        if not (self.neighbour_test(x,y,digit)):
-            print("Illegal move: " + " ".join(args) + " three in a row")
-            return False
-
-        #missing balancing case
-        if not (self.isBalanced(x,y,digit)):
-            print("Illegal move: " + " ".join(args) + " too many " + str(digit))
-            return False
-
-
-        #reaching this part assumes the above cases causes a legal move
-
-        #math to place in a 1d array with borders
         self.board[pos_in_1d_array] = digit
         self.current_player += 1
         return True
     
     def legal(self, args):
-        if self.Boolean_var(args)== True:
+        if self.legalChecks(args,shouldPrint=False)== True:
             print("Yes")
             return True
         else:
@@ -200,27 +172,53 @@ class CommandInterface:
     # End of functions requiring implementation
     #======================================================================================
 
-    def Boolean_var(self,args):
-        if len(args) != 3: 
+    def legalChecks(self,args,shouldPrint):
+
+        
+        if len(args) != 3:
+            if(shouldPrint):
+                print("Illegal move: " + " ".join(args) + " wrong number of arguments")
             return False
+        
         if ( not args[0].isdigit() or not args[1].isdigit() or not args[2].isdigit()):
+            if(shouldPrint):
+                print("Illegal move: " + " ".join(args) + " wrong coordinate")
             return False
+
         x = int(args[0])
         y = int(args[1])
         digit = args[2]
+
         if(digit != '0' and digit != '1'):
+            if(shouldPrint):
+                print("Illegal move: " + " ".join(args) + " wrong number")
             return False
+        
         if( not(0 <= x <= self.max_x-1) or not(0 <= y <= self.max_y-1)):
+            if(shouldPrint):
+                print("Illegal move: " + " ".join(args) + " wrong coordinate")
             return False
+
         pos_in_1d_array = (self.max_x+1)*(y+1)+(x+1)
+
         if(self.board[pos_in_1d_array] != '.'):
+            if(shouldPrint):
+                print("illegal move: " + " ".join(args) + " occupied")
             return False
+        
+        #neighbour testing
         if not (self.neighbour_test(x,y,digit)):
+            if(shouldPrint):
+                print("Illegal move: " + " ".join(args) + " three in a row")
             return False
+
+        #balancing case
         if not (self.isBalanced(x,y,digit)):
+            if(shouldPrint):
+                print("Illegal move: " + " ".join(args) + " too many " + str(digit))
             return False
-        else:
-            return True
+
+        return True
         
     def neighbour_test(self, x, y, digit):
         """
@@ -330,10 +328,10 @@ class CommandInterface:
             xpos = pos_1darray % self.max_x
             ypos = pos_1darray // self.max_x
             args = [str(xpos), str(ypos), str(0)]
-            if self.Boolean_var(args) == True:
+            if self.legalChecks(args, shouldPrint=False) == True:
                 move.append(args)
             args = [str(xpos), str(ypos), str(1)]
-            if self.Boolean_var(args) == True:
+            if self.legalChecks(args, shouldPrint=False) == True:
                 move.append(args)
         
         return move
