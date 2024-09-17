@@ -107,10 +107,8 @@ class CommandInterface:
         if(self.board == None):
             print("game is not initialized")
             return False
-
             #if necessary to create a default state for the game
             #self.game(['3','3']) 
-
         pos = 0
         for item in self.board:
             
@@ -125,16 +123,13 @@ class CommandInterface:
     
     def play(self, args):
 
-        
         if( self.legalChecks(args,shouldPrint=True) == False ):
             return False
-
         #math to place in a 1d array with borders
 
         x = int(args[0])
         y = int(args[1])
         digit = args[2]
-
         pos_in_1d_array = (self.max_x+1)*(y+1)+(x+1)
 
         self.board[pos_in_1d_array] = digit
@@ -174,7 +169,10 @@ class CommandInterface:
 
     def legalChecks(self,args,shouldPrint):
 
-        
+        x = int(args[0])
+        y = int(args[1])
+        digit = args[2]
+
         if len(args) != 3:
             if(shouldPrint):
                 print("Illegal move: " + " ".join(args) + " wrong number of arguments")
@@ -184,21 +182,17 @@ class CommandInterface:
             if(shouldPrint):
                 print("Illegal move: " + " ".join(args) + " wrong coordinate")
             return False
-
-        x = int(args[0])
-        y = int(args[1])
-        digit = args[2]
-
-        if(digit != '0' and digit != '1'):
-            if(shouldPrint):
-                print("Illegal move: " + " ".join(args) + " wrong number")
-            return False
         
         if( not(0 <= x <= self.max_x-1) or not(0 <= y <= self.max_y-1)):
             if(shouldPrint):
                 print("Illegal move: " + " ".join(args) + " wrong coordinate")
             return False
 
+        if(digit != '0' and digit != '1'):
+            if(shouldPrint):
+                print("Illegal move: " + " ".join(args) + " wrong number")
+            return False
+        
         pos_in_1d_array = (self.max_x+1)*(y+1)+(x+1)
 
         if(self.board[pos_in_1d_array] != '.'):
